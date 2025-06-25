@@ -312,5 +312,189 @@
           targets
         );
       }
-    );
+    )
+    // {
+      nixosModules.default =
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
+        with lib;
+        let
+          cfg = config.services.kellnr;
+        in
+        {
+          options.services.kellnr = {
+            enable = mkEnableOption "Kellnr private Rust registry";
+
+            package = mkPackageOption pkgs "kellnr" { };
+
+            user = mkOption {
+              type = types.str;
+              default = "kellnr";
+              description = "User account under which kellnr runs.";
+            };
+
+            group = mkOption {
+              type = types.str;
+              default = "kellnr";
+              description = "Group under which kellnr runs.";
+            };
+
+            dataDir = mkOption {
+              type = types.path;
+              default = "/var/lib/kellnr";
+              description = "Directory where Kellnr stores all its data.";
+            };
+
+            configFile = mkOption {
+              type = types.nullOr types.path;
+              default = null;
+              description = "Path to kellnr configuration file. If null, a default configuration will be generated from settings. WARNING: If both configFile and settings are provided, configFile takes precedence and settings will be ignored.";
+            };
+
+            settings = mkOption {
+              type = types.submodule {
+                freeformType = (pkgs.formats.toml { }).type;
+                options = {
+                  registry = {
+                    data_dir = mkOption {
+                      type = types.path;
+                      default = cfg.dataDir;
+                      description = "Directory where Kellnr stores all its data.";
+                    };
+                    session_age_seconds = mkOption {
+                      type = types.int;
+                      default = 28800;
+                      description = "Seconds until a user is logged out automatically after inactivity.";
+                    };
+                    cache_size = mkOption {
+                      type = types.int;
+                      default = 1000;
+                      description = "Number of crates to cache in-memory. If set to 0, the cache is disabled.";
+                    };
+                    max_crate_size = mkOption {
+                      type = types.int;
+                      default = 10;
+                      description = "Max size of a crate that can be uploaded to Kellnr in MB.";
+                    };
+                    auth_required = mkOption {
+                      type = types.bool;
+                      default = false;
+                      description = "Enable required authentication for crate pulls.";
+                    };
+                  };
+                  local = {
+                    ip = mkOption {
+                      type = types.str;
+                      default = "127.0.0.1";
+                      description = "Address where the API and web server is started.";
+                    };
+                    port = mkOption {
+                      type = types.port;
+                      default = 8000;
+                      description = "The port where Kellnr starts listening for incoming connections.";
+                    };
+                  };
+                  origin = {
+                    hostname = mkOption {
+                      type = types.str;
+                      default = "localhost";
+                      description = "The hostname where Kellnr is reachable from the outside.";
+                    };
+                    port = mkOption {
+                      type = types.port;
+                      default = cfg.settings.local.port;
+                      description = "Port where Kellnr is reachable from the outside.";
+                    };
+                    protocol = mkOption {
+                      type = types.enum [
+                        "http"
+                        "https"
+                      ];
+                      default = "http";
+                      description = "Protocol used to reach Kellnr from the outside.";
+                    };
+                  };
+                  log = {
+                    level = mkOption {
+                      type = types.enum [
+                        "trace"
+                        "debug"
+                        "info"
+                        "warn"
+                        "error"
+                      ];
+                      default = "info";
+                      description = "Set the log level.";
+                    };
+                    format = mkOption {
+                      type = types.enum [
+                        "compact"
+                        "pretty"
+                        "json"
+                      ];
+                      default = "compact";
+                      description = "Set the log format.";
+                    };
+                  };
+                };
+              };
+              default = { };
+              description = "Configuration for kellnr. WARNING: If both configFile and settings are provided, configFile takes precedence and these settings will be ignored.";
+            };
+          };
+
+          config = mkIf cfg.enable {
+            warnings = lib.optional (cfg.configFile != null && cfg.settings != { }) 
+              "services.kellnr: Both configFile and settings are specified. configFile takes precedence and settings will be ignored.";
+
+            users.users.${cfg.user} = {
+              isSystemUser = true;
+              group = cfg.group;
+              home = cfg.dataDir;
+              createHome = true;
+            };
+
+            users.groups.${cfg.group} = { };
+
+            systemd.services.kellnr = {
+              description = "Kellnr private Rust registry";
+              wantedBy = [ "multi-user.target" ];
+              after = [ "network.target" ];
+
+              serviceConfig = {
+                Type = "exec";
+                User = cfg.user;
+                Group = cfg.group;
+                Restart = "on-failure";
+                WorkingDirectory = cfg.dataDir;
+                StateDirectory = "kellnr";
+                StateDirectoryMode = "0755";
+
+                # Security settings
+                NoNewPrivileges = true;
+                PrivateTmp = true;
+                ProtectSystem = "strict";
+                ProtectHome = true;
+                ReadWritePaths = [ cfg.dataDir ];
+              };
+
+              script =
+                let
+                  configFile =
+                    if cfg.configFile != null then
+                      cfg.configFile
+                    else
+                      (pkgs.formats.toml { }).generate "kellnr.toml" cfg.settings;
+                in
+                ''
+                  exec ${cfg.package}/bin/kellnr --config ${configFile}
+                '';
+            };
+          };
+        };
+    };
 }
