@@ -76,6 +76,15 @@ let
         sha512 = "Z9kfb1v6ZlGbWj8EJk9T6czVEjjq2ntSYLY2cw6pAZl4oKtfgQuS4HOq41M/BcoLPzrUbNd+R4BXFyH//nHxVg==";
       };
     };
+    "@esbuild/linux-x64-0.25.5" = {
+      name = "_at_esbuild_slash_linux-x64";
+      packageName = "@esbuild/linux-x64";
+      version = "0.25.5";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.5.tgz";
+        sha512 = "uhj8N2obKTE6pSZ+aMUbqq+1nXxNjZIIjCjGLfsWvVpy7gKCOL6rsY1MhRh9zLtUtAI7vpgLMK6DxjO8Qm9lJw==";
+      };
+    };
     "@eslint-community/eslint-utils-4.7.0" = {
       name = "_at_eslint-community_slash_eslint-utils";
       packageName = "@eslint-community/eslint-utils";
@@ -353,6 +362,15 @@ let
       src = fetchurl {
         url = "https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.44.0.tgz";
         sha512 = "ZTR2mxBHb4tK4wGf9b8SYg0Y6KQPjGpR4UWwTFdnmjB4qRtoATZ5dWn3KsDwGa5Z2ZBOE7K52L36J9LueKBdOQ==";
+      };
+    };
+    "@rollup/rollup-linux-x64-gnu-4.44.0" = {
+      name = "_at_rollup_slash_rollup-linux-x64-gnu";
+      packageName = "@rollup/rollup-linux-x64-gnu";
+      version = "4.44.0";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.44.0.tgz";
+        sha512 = "iUVJc3c0o8l9Sa/qlDL2Z9UP92UZZW1+EmQ4xfjTc1akr0iUFZNfxrXJ/R1T90h/ILm9iXEY6+iPrmYB3pXKjw==";
       };
     };
     "@types/eslint-9.6.1" = {
@@ -3907,6 +3925,7 @@ let
       sources."@bufbuild/protobuf-2.5.2"
       sources."@esbuild/darwin-arm64-0.25.5"
       sources."@esbuild/linux-arm64-0.25.5"
+      sources."@esbuild/linux-x64-0.25.5"
       (sources."@eslint-community/eslint-utils-4.7.0" // {
         dependencies = [
           sources."eslint-visitor-keys-3.4.3"
@@ -3953,6 +3972,7 @@ let
       sources."@pinia/nuxt-0.11.1"
       sources."@rollup/rollup-darwin-arm64-4.44.0"
       sources."@rollup/rollup-linux-arm64-gnu-4.44.0"
+      sources."@rollup/rollup-linux-x64-gnu-4.44.0"
       sources."@types/eslint-9.6.1"
       sources."@types/eslint-scope-3.7.7"
       sources."@types/estree-1.0.8"
